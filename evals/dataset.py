@@ -25,6 +25,7 @@ def upsert_dataset():
         {
             "inputs": ex["inputs"],
             "outputs": ex["reference_outputs"],
+            "metadata": {"ex_id": ex["id"]},
         }
         for ex in SEED_EXAMPLES
     ]

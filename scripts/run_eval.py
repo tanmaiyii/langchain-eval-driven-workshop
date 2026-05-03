@@ -6,6 +6,7 @@ from evals.heuristic_evaluators import (
     refund_safety,
     escalation_correctness,
 )
+from evals.llm_judge_evaluators import kb_grounding_judge
 
 
 def main():
@@ -18,8 +19,9 @@ def main():
             classification_correct,
             refund_safety,
             escalation_correctness,
+            kb_grounding_judge,
         ],
-        experiment_prefix="heuristic-baseline",
+        experiment_prefix="with-judge-baseline",
         max_concurrency=4,
     )
     print(results)
