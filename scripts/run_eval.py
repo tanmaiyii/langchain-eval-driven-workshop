@@ -7,6 +7,7 @@ from evals.heuristic_evaluators import (
     escalation_correctness,
 )
 from evals.llm_judge_evaluators import kb_grounding_judge
+from evals.trajectory_evaluators import trajectory_superset
 
 
 def main():
@@ -20,8 +21,9 @@ def main():
             refund_safety,
             escalation_correctness,
             kb_grounding_judge,
+            trajectory_superset,
         ],
-        experiment_prefix="with-judge-baseline",
+        experiment_prefix="v3-restored",
         max_concurrency=4,
     )
     print(results)

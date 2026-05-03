@@ -12,18 +12,21 @@ def target(inputs: dict) -> dict:
     result = agent.invoke(
         {"messages": [{"role": "user", "content": inputs["message"]}]},
         config=config,
+        version="v2",
     )
-    while result.get("__interrupt__"):
+    while result.interrupts:
         result = agent.invoke(
             Command(resume={"decisions": [{"type": "approve"}]}),
             config=config,
+            version="v2",
         )
 
+    messages = result.value["messages"]
     return {
-        "final_message": result["messages"][-1].content,
+        "final_message": messages[-1].content,
         "tool_calls": [
             tc["name"]
-            for m in result["messages"]
+            for m in messages
             for tc in (getattr(m, "tool_calls", None) or [])
         ],
     }

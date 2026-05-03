@@ -24,8 +24,14 @@ def search_kb(query: str) -> list[dict]:
 
 @tool
 def issue_refund(customer_id: str, amount: float, reason: str) -> str:
-    """Issue a refund to a customer. SENSITIVE — requires human approval."""
-    return f"Refund of ${amount} issued to {customer_id} for: {reason}"
+    """Submit a refund request for review. The refund is NOT executed immediately —
+    it is queued and processed only after a human reviewer approves it. Tell the
+    customer their request has been submitted; do NOT tell them the refund has
+    been issued."""
+    return (
+        f"Refund request submitted for {customer_id}: ${amount} for '{reason}'. "
+        f"Customer will be emailed once review is complete."
+    )
 
 
 @tool

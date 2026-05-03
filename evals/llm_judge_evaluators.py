@@ -1,3 +1,4 @@
+from openai import LengthFinishReasonError
 from openevals.llm import create_llm_as_judge
 
 KB_GROUNDING_PROMPT = """You are evaluating whether an AI customer support agent's answer is grounded in the knowledge base.
@@ -44,8 +45,15 @@ def kb_grounding_judge(inputs: dict, outputs: dict, reference_outputs: dict):
         model="openai:o3-mini",
         feedback_key="kb_grounding",
     )
-    return evaluator(
-        inputs=inputs,
-        outputs=outputs,
-        reference_outputs=reference_outputs,
-    )
+    try:
+        return evaluator(
+            inputs=inputs,
+            outputs=outputs,
+            reference_outputs=reference_outputs,
+        )
+    except LengthFinishReasonError as e:
+        return {
+            "key": "kb_grounding",
+            "score": None,
+            "comment": f"skipped: o3-mini exhausted output token limit ({e})",
+        }
