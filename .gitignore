@@ -12,3 +12,9 @@ __pycache__/
 scripts/analyze_repetitions.py
 tests/notebook_narration.py
 tests/test_notebook_integrity.py
+
+# Presenter-side content (kept local; delivered to the panel out-of-band, not via repo)
+slides/
+WORKSHOP_BRIEF.md
+WORKSHOP_BRIEF.html
+WORKSHOP_BRIEF.pdf

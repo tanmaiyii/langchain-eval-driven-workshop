@@ -1,10 +1,31 @@
 name: Agent Quality Evals
 
+# Run only when files that affect agent behavior or test infrastructure change.
+# Doc-only commits (README, .gitignore, notebook narration, etc.) skip CI to
+# avoid wasting evaluator API credits on changes that can't break the gate.
 on:
   pull_request:
     branches: [main]
+    paths:
+      - 'src/**'
+      - 'evals/**'
+      - 'tests/**'
+      - 'scripts/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - 'requirements.txt'
+      - '.github/workflows/evals.yml'
   push:
     branches: [main]
+    paths:
+      - 'src/**'
+      - 'evals/**'
+      - 'tests/**'
+      - 'scripts/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - 'requirements.txt'
+      - '.github/workflows/evals.yml'
 
 jobs:
   evals:
