@@ -219,4 +219,97 @@ SEED_EXAMPLES = [
             "should_refund": False,
         },
     },
+    # Multi-turn: vague first message, customer ID + intent surface on turn 2.
+    # The target detects `inputs["messages"]` (list) and feeds turns through the
+    # same thread_id so the checkpointer carries state across turns.
+    {
+        "id": "ex-021",
+        "inputs": {"messages": [
+            "Hi, I'm having trouble logging in.",
+            "I'm cust_002 and it's a password issue.",
+        ]},
+        "reference_outputs": {
+            "expected_classification": "account",
+            "should_escalate": False,
+            "should_refund": False,
+            "expected_kb_doc_id": "kb-002",
+        },
+    },
+]
+
+
+# Capability examples — deliberately harder than the 20 regression examples.
+# These test what the agent SHOULD eventually do but currently struggles with.
+# Per LangChain's Agent Evaluation Readiness Checklist:
+#   "Capability evals answer 'what can it do?' — start with low pass rate."
+# Pass rate on these is expected to be 30–60% on baseline and tracks
+# improvement as the agent's prompt/tools/model improve.
+
+CAPABILITY_EXAMPLES = [
+    {
+        "id": "cap-001",
+        "inputs": {
+            "message": (
+                "I'm cust_001. Three things — (1) I cancelled my plan last "
+                "month but was charged this month, please refund and confirm "
+                "the cancellation will actually go through next cycle. "
+                "(2) My password reset link from yesterday says 'expired' "
+                "even though I clicked it within 30 minutes. (3) My API key "
+                "started returning 401s right around when the charge hit. "
+                "Can you sort all of this?"
+            )
+        },
+        "reference_outputs": {
+            "expected_classification": "billing",
+            "expected_tools": ["get_customer_plan", "search_kb"],
+            "expected_kb_doc_ids": ["kb-001", "kb-002", "kb-003"],
+            "should_escalate": False,
+            "should_refund": True,
+            "capability_signal": "multi_issue_handling",
+        },
+    },
+    {
+        "id": "cap-002",
+        "inputs": {
+            "message": (
+                "I'm cust_003 on enterprise. We're getting throttled at what "
+                "looks like the free-tier 100 req/min limit instead of our "
+                "enterprise allotment. We've verified our API key and "
+                "rate-limiting library — both correct. Started 2 hours ago, "
+                "production is degraded. Two questions: (a) is this a known "
+                "issue on your side? (b) does our SLA cover production "
+                "downtime caused by your throttling errors? Need someone who "
+                "can speak to both."
+            )
+        },
+        "reference_outputs": {
+            "expected_classification": "technical",
+            "expected_tools": ["get_customer_plan", "search_kb"],
+            "expected_kb_doc_id": "kb-003",
+            "should_escalate": True,
+            "should_refund": False,
+            "capability_signal": "context_aware_escalation",
+        },
+    },
+    {
+        "id": "cap-003",
+        "inputs": {
+            "message": (
+                "Hi, my account is cust_002 (currently on free tier). Quick "
+                "policy question before I commit: if I upgrade my account to "
+                "Pro right now, is my refund eligibility window for this "
+                "billing cycle's charges synchronized to the upgrade date or "
+                "the original signup date? Want to nail down the policy "
+                "details before I pay."
+            )
+        },
+        "reference_outputs": {
+            "expected_classification": "billing",
+            "expected_tools": ["get_customer_plan", "search_kb"],
+            "expected_kb_doc_ids": ["kb-001", "kb-006"],
+            "should_escalate": False,
+            "should_refund": False,
+            "capability_signal": "policy_synthesis",
+        },
+    },
 ]

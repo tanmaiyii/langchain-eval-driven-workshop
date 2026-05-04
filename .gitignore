@@ -7,3 +7,6 @@ __pycache__/
 .ipynb_checkpoints/
 *.pyc
 .ruff_cache/
+
+# Local rehearsal/analysis tools — not part of the workshop deliverable
+scripts/analyze_repetitions.py

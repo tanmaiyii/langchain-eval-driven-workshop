@@ -23,7 +23,7 @@ def main():
             kb_grounding_judge,
             trajectory_superset,
         ],
-        experiment_prefix="v3-restored",
+        experiment_prefix="baseline",
         max_concurrency=4,
     )
     print(results)
