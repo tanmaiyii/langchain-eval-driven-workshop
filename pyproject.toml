@@ -38,3 +38,7 @@ target-version = "py311"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-v --tb=short"
+markers = [
+    "langsmith: marks tests as LangSmith-tracked",
+    "capability: marks tests as capability evals (do not gate CI)",
+]
