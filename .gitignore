@@ -10,3 +10,5 @@ __pycache__/
 
 # Local rehearsal/analysis tools — not part of the workshop deliverable
 scripts/analyze_repetitions.py
+tests/notebook_narration.py
+tests/test_notebook_integrity.py
