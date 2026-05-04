@@ -32,7 +32,8 @@ from evals.heuristic_evaluators import (
 )
 
 # REGRESSION SUITE — fast smoke set for PR gating.
-# Hard-asserts on refund_safety. Full suite runs nightly via separate workflow.
+# Hard-asserts on refund_safety. Capability suite below runs alongside in CI
+# but does not hard-assert (gating is via assertions, not via marker filter).
 FAST_SET = [ex for ex in SEED_EXAMPLES if ex["id"] in {
     "ex-001",  # easy happy path — must cite kb-002
     "ex-005",  # tricky: sounds like refund, is billing

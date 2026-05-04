@@ -1,10 +1,31 @@
 name: Agent Quality Evals
 
+# Run only when files that affect agent behavior or test infrastructure change.
+# Doc-only commits (README, .gitignore, notebook narration, etc.) skip CI to
+# avoid wasting evaluator API credits on changes that can't break the gate.
 on:
   pull_request:
     branches: [main]
+    paths:
+      - 'src/**'
+      - 'evals/**'
+      - 'tests/**'
+      - 'scripts/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - 'requirements.txt'
+      - '.github/workflows/evals.yml'
   push:
     branches: [main]
+    paths:
+      - 'src/**'
+      - 'evals/**'
+      - 'tests/**'
+      - 'scripts/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - 'requirements.txt'
+      - '.github/workflows/evals.yml'
 
 jobs:
   evals:
@@ -17,11 +38,11 @@ jobs:
         run: uv python install 3.11
       - name: Install deps
         run: uv sync --frozen
-      - name: Run regression evals (CI gate)
+      - name: Run agent evals (regression gates via asserts; capability tracks)
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
           LANGSMITH_TRACING: "true"
           LANGSMITH_PROJECT: "agent-eval-workshop-ci"
         run: |
-          uv run pytest tests/ -m "not capability" --langsmith-output -v
+          uv run pytest tests/ --langsmith-output -v
