@@ -17,11 +17,11 @@ jobs:
         run: uv python install 3.11
       - name: Install deps
         run: uv sync --frozen
-      - name: Run regression evals (CI gate)
+      - name: Run agent evals (regression gates via asserts; capability tracks)
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
           LANGSMITH_TRACING: "true"
           LANGSMITH_PROJECT: "agent-eval-workshop-ci"
         run: |
-          uv run pytest tests/ -m "not capability" --langsmith-output -v
+          uv run pytest tests/ --langsmith-output -v
