@@ -40,22 +40,18 @@ cp .env.example .env
 # 4. Verify the agent traces to LangSmith
 uv run python -m scripts.smoke_test
 
-# 5. Run the regression eval suite (against support-triage-v1 dataset)
-uv run python -m scripts.run_eval
-
-# 6. Run the capability eval suite (separately, no hard-asserts)
-uv run python -m scripts.run_capability_eval
-
-# 7. Run the CI gate locally — same command GitHub Actions runs on every PR
+# 5. Run the CI gate locally — pytest runs both regression + capability,
+#    and this is the exact command GitHub Actions runs on every PR
 uv run pytest tests/ -v
 
-# 8. Open the workshop notebook
+# 6. (Optional, ad-hoc) Run a single suite via client.evaluate — useful
+#    when iterating on one suite without re-running the other
+uv run python -m scripts.run_eval             # regression
+uv run python -m scripts.run_capability_eval  # capability
+
+# 7. Open the workshop notebook
 uv run jupyter lab notebook.ipynb
 ```
-
-The CI gate runs automatically on every pull request to `main` via
-`.github/workflows/evals.yml`. The badge at the top of this README
-reflects the latest workflow status.
 
 ---
 
@@ -124,9 +120,7 @@ regression demo, and a customer-facing UX that makes the HITL semantics
 coherent. The agent **submits a refund request for review** rather than
 executing the refund — the customer is told the request has been
 submitted and they'll receive an email; the runtime gate reviews the
-request before the refund hits the processing queue. This is what
-makes synchronous HITL coherent with a customer-facing chatbot: no
-false claim of "refund issued" during the human-review pause.
+request before the refund hits the processing queue.
 
 ---
 
@@ -200,6 +194,10 @@ and quality-threshold-triggered annotation queues), see LangChain's
 ---
 
 ## The 24 seed examples
+
+> *In production, dataset construction is preceded by manual review
+> of 20–50 real agent traces. The hand-crafted seed set below is
+> that step's output, compressed into a teaching artifact.*
 
 **21 regression examples** in `SEED_EXAMPLES` covering:
 
@@ -308,52 +306,11 @@ deliverable for Module 4.
 
 ## Further reading
 
-The patterns in this repo follow LangChain's canonical references —
-listed here in the order to read them:
-
-- **[LangSmith Evaluation Quickstart](https://docs.langchain.com/langsmith/evaluation-quickstart)** —
-  the canonical eval pattern this repo follows: evaluator signature
-  `(inputs, outputs, reference_outputs)`, dataset shape,
-  `client.evaluate(...)` runner.
-- **[Agent Evaluation Readiness Checklist](https://www.langchain.com/blog/agent-evaluation-readiness-checklist)** —
-  the strategic context for what eval-driven development covers
-  end-to-end. This repo's CI gating discipline aligns with the
-  checklist's verbatim guidance to *"Integrate regression evals into
-  your CI/CD pipeline with automated quality gates"* and to *"Use cheap
-  code-based graders in CI for every commit. Reserve expensive
-  LLM-as-judge evaluations for preview/production evaluation."* The
-  "heuristics gate; judges track" architecture in this repo is the
-  workshop's implementation of that second principle. The
-  production-readiness items (online evals, user-feedback capture,
-  capability→regression promotion) are the natural follow-on once the
-  offline foundation is in place — out of scope for this demo.
-- **[LangSmith CI/CD pipeline guide](https://docs.langchain.com/langsmith/cicd-pipeline-example)** —
-  *"Implement a CI/CD pipeline using LangSmith Deployment and Evaluation."*
-  The most directly relevant canonical reference for the architecture
-  this repo demonstrates: GitHub Actions + AgentEvals + OpenEvals +
-  Hard/Soft assertions + the *"Quality Below Threshold → annotation
-  queues + alerts"* flow. If you want to extend this repo's pattern
-  toward a production pipeline, this is the next read.
-- **[langchain-ai/intro-to-langsmith](https://github.com/langchain-ai/intro-to-langsmith)** —
-  the official LangSmith course (5 modules: tracing, evaluations,
-  prompt engineering, human feedback, production monitoring). Module 4
-  ("Collecting Human Feedback" — L1 User Feedback + L2 Annotation
-  Queues) is the canonical source for the Align-Eval calibration
-  workflow this repo demonstrates in `evals/llm_judge_evaluators.py`
-  and the calibration walkthrough section of the notebook. This repo's
-  dependency-management pattern (`pyproject.toml` + `uv.lock` +
-  `requirements.txt` all committed) also mirrors the course.
-- **[openevals](https://github.com/langchain-ai/openevals)** — pre-built
-  LLM-judge templates. `create_llm_as_judge` (used by
-  `evals/llm_judge_evaluators.py`) is from here.
-- **[agentevals](https://github.com/langchain-ai/agentevals)** —
-  trajectory-evaluation patterns. `create_trajectory_llm_as_judge` (used
-  by `evals/trajectory_evaluators.py`) is from here.
-- **[HumanInTheLoopMiddleware docs](https://docs.langchain.com/oss/python/langchain/human-in-the-loop)** —
-  the runtime safety layer around `issue_refund`. The eval auto-approves
-  to measure agent intent; production handoff uses the four decision
-  types documented here.
-- **[LangSmith pytest integration](https://docs.langchain.com/langsmith/pytest)** —
-  the canonical pattern for the CI gate (`@pytest.mark.langsmith`,
-  `langsmith.testing` helpers, `--langsmith-output` flag). This repo's
-  `tests/test_agent_quality.py` follows it directly.
+- **[LangSmith Evaluation Quickstart](https://docs.langchain.com/langsmith/evaluation-quickstart)** — canonical evaluator signature, dataset shape, and `client.evaluate(...)` runner this repo follows.
+- **[Agent Evaluation Readiness Checklist](https://www.langchain.com/blog/agent-evaluation-readiness-checklist)** — strategic framing for eval-driven dev; the two-suites split and CI gating guidance this repo implements.
+- **[LangSmith CI/CD pipeline guide](https://docs.langchain.com/langsmith/cicd-pipeline-example)** — production pipeline pattern (GitHub Actions + AgentEvals + OpenEvals); the natural next read after this repo.
+- **[langchain-ai/intro-to-langsmith](https://github.com/langchain-ai/intro-to-langsmith)** — official LangSmith course; Module 4 (Collecting Human Feedback) covers the Align Eval calibration workflow.
+- **[openevals](https://github.com/langchain-ai/openevals)** — pre-built LLM-judge templates; `create_llm_as_judge` lives here.
+- **[agentevals](https://github.com/langchain-ai/agentevals)** — trajectory-evaluation patterns; `create_trajectory_llm_as_judge` lives here.
+- **[HumanInTheLoopMiddleware](https://docs.langchain.com/oss/python/langchain/human-in-the-loop)** — runtime safety layer wired around `issue_refund`.
+- **[LangSmith pytest integration](https://docs.langchain.com/langsmith/pytest)** — `@pytest.mark.langsmith` + `--langsmith-output` flag for CI tests.
