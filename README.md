@@ -182,6 +182,21 @@ to the failure mode it catches.
   convenience for running capability in isolation
   (e.g., `pytest -m capability` for fast iteration), not a CI gate config.
 
+This architecture aligns with LangChain's *Agent Evaluation Readiness
+Checklist*, which prescribes:
+
+> *"Integrate regression evals into your CI/CD pipeline with automated
+> quality gates"*
+>
+> *"Use cheap code-based graders in CI for every commit. Reserve
+> expensive LLM-as-judge evaluations for preview/production evaluation."*
+
+The "heuristics gate; judges track" split here is the workshop's
+implementation of that second principle. For a fuller production
+pipeline implementation pattern (with preview deployments, online evals,
+and quality-threshold-triggered annotation queues), see LangChain's
+[CI/CD pipeline guide](https://docs.langchain.com/langsmith/cicd-pipeline-example).
+
 ---
 
 ## The 24 seed examples
@@ -300,17 +315,34 @@ listed here in the order to read them:
   the canonical eval pattern this repo follows: evaluator signature
   `(inputs, outputs, reference_outputs)`, dataset shape,
   `client.evaluate(...)` runner.
-- **[langchain-ai/intro-to-langsmith](https://github.com/langchain-ai/intro-to-langsmith)** —
-  the official LangSmith course covering tracing through evaluation.
-  This repo's dependency-management pattern (`pyproject.toml` +
-  `uv.lock` + `requirements.txt` all committed) mirrors it.
 - **[Agent Evaluation Readiness Checklist](https://www.langchain.com/blog/agent-evaluation-readiness-checklist)** —
   the strategic context for what eval-driven development covers
-  end-to-end. This repo addresses the offline portions (dataset
-  construction, grader design, running/iterating, CI integration). The
+  end-to-end. This repo's CI gating discipline aligns with the
+  checklist's verbatim guidance to *"Integrate regression evals into
+  your CI/CD pipeline with automated quality gates"* and to *"Use cheap
+  code-based graders in CI for every commit. Reserve expensive
+  LLM-as-judge evaluations for preview/production evaluation."* The
+  "heuristics gate; judges track" architecture in this repo is the
+  workshop's implementation of that second principle. The
   production-readiness items (online evals, user-feedback capture,
   capability→regression promotion) are the natural follow-on once the
   offline foundation is in place — out of scope for this demo.
+- **[LangSmith CI/CD pipeline guide](https://docs.langchain.com/langsmith/cicd-pipeline-example)** —
+  *"Implement a CI/CD pipeline using LangSmith Deployment and Evaluation."*
+  The most directly relevant canonical reference for the architecture
+  this repo demonstrates: GitHub Actions + AgentEvals + OpenEvals +
+  Hard/Soft assertions + the *"Quality Below Threshold → annotation
+  queues + alerts"* flow. If you want to extend this repo's pattern
+  toward a production pipeline, this is the next read.
+- **[langchain-ai/intro-to-langsmith](https://github.com/langchain-ai/intro-to-langsmith)** —
+  the official LangSmith course (5 modules: tracing, evaluations,
+  prompt engineering, human feedback, production monitoring). Module 4
+  ("Collecting Human Feedback" — L1 User Feedback + L2 Annotation
+  Queues) is the canonical source for the Align-Eval calibration
+  workflow this repo demonstrates in `evals/llm_judge_evaluators.py`
+  and the calibration walkthrough section of the notebook. This repo's
+  dependency-management pattern (`pyproject.toml` + `uv.lock` +
+  `requirements.txt` all committed) also mirrors the course.
 - **[openevals](https://github.com/langchain-ai/openevals)** — pre-built
   LLM-judge templates. `create_llm_as_judge` (used by
   `evals/llm_judge_evaluators.py`) is from here.
