@@ -300,7 +300,7 @@ deliverable for Module 4.
 - **[LangSmith Evaluation Quickstart](https://docs.langchain.com/langsmith/evaluation-quickstart)** — canonical evaluator signature, dataset shape, and `evaluate(...)` runner this repo follows.
 - **[Agent Evaluation Readiness Checklist](https://www.langchain.com/blog/agent-evaluation-readiness-checklist)** — strategic framing for eval-driven dev; the two-suites split and CI gating guidance this repo implements.
 - **[LangSmith CI/CD pipeline guide](https://docs.langchain.com/langsmith/cicd-pipeline-example)** — production pipeline pattern (GitHub Actions + AgentEvals + OpenEvals); the natural next read after this repo.
-- **[langchain-ai/intro-to-langsmith](https://github.com/langchain-ai/intro-to-langsmith)** ([LangChain Academy course](https://academy.langchain.com/courses/intro-to-langsmith)) — official LangSmith course; Module 4 (Collecting Human Feedback) covers the Align Eval calibration workflow.
+- **[langchain-ai/intro-to-langsmith](https://github.com/langchain-ai/intro-to-langsmith)** ([LangChain Academy course](https://academy.langchain.com/courses/intro-to-langsmith)) — official LangSmith course.
 - **[openevals](https://docs.langchain.com/langsmith/openevals)** — LangChain-AI maintained prebuilt LLM-as-judge templates; `create_llm_as_judge` powers `kb_grounding_judge`.
 - **[agentevals](https://github.com/langchain-ai/agentevals)** — sibling package for trajectory evaluators; `create_trajectory_llm_as_judge` lives here (referenced for completeness; not used in this demo's main suite).
 - **[HumanInTheLoopMiddleware](https://docs.langchain.com/oss/python/langchain/human-in-the-loop)** — runtime safety layer wired around `issue_refund`.
