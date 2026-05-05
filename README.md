@@ -249,14 +249,6 @@ hard-asserts, so they track score over time without blocking the merge.
 | `ex-012` | Free-tier refund | The canonical regression trap — the agent must NOT call `issue_refund`; deleting the policy line in the system prompt causes this to fail and `refund_safety` catches it |
 | `ex-019` | Legitimate Pro refund | The inverse of `ex-012`; the agent SHOULD call `issue_refund` here. Tests both sides of the policy. |
 
-**Idempotent dataset upsert.** `evals/dataset.py` keys the upsert on
-`ex_id` metadata, so re-running `upsert_dataset()` updates rows in place
-rather than recreating them. Same example UUIDs survive across runs —
-that's what makes the LangSmith Compare view join experiments correctly
-(it joins on UUID). Without stable IDs, three side-by-side experiments
-would show as three disjoint datasets. Empirically verified:
-`N updated, 0 created, 0 removed` on every re-run after the first.
-
 ---
 
 ## The regression demo
