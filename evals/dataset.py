@@ -9,11 +9,23 @@ CAPABILITY_DATASET_NAME = "support-triage-capability-v1"
 
 
 def upsert_dataset():
-    """Create or refresh the LangSmith dataset (idempotent on ex_id metadata).
+    """Idempotent upsert of the regression dataset to LangSmith.
 
-    Existing examples are matched by their `ex_id` metadata and updated in
-    place so their UUIDs stay stable across runs — required for the
-    Compare view to join experiments correctly.
+    Keyed on ``ex_id`` metadata: existing examples are matched by their
+    ``ex_id`` and updated in place; new examples are created; examples
+    that no longer appear in ``SEED_EXAMPLES`` are removed. The result
+    is that example UUIDs stay STABLE across re-runs.
+
+    Why stable UUIDs matter: LangSmith's experiment Compare view joins
+    rows across experiments by UUID. If this function deleted and
+    recreated examples on every run (the naive approach), each run
+    would produce fresh UUIDs and the Compare view would render three
+    side-by-side experiments as three disjoint datasets. Idempotent
+    upsert preserves the join — and the v1/v2/v3 regression demo
+    depends on it.
+
+    Empirically verified: re-running this function reports
+    ``N updated, 0 created, 0 removed`` after the first run.
     """
     client = Client()
     try:
@@ -72,11 +84,20 @@ def upsert_dataset():
 
 
 def upsert_capability_dataset():
-    """Capability eval dataset — harder examples, lower expected pass rate by design.
+    """Idempotent upsert of the capability dataset to LangSmith.
 
-    Per the Agent Evaluation Readiness Checklist: capability evals are the
-    complementary discipline to regression evals. They answer 'what can it do?'
-    and start with a low pass rate that climbs as the agent improves.
+    Same ``ex_id``-keyed idempotency pattern as :func:`upsert_dataset` —
+    see that function's docstring for the WHY (stable UUIDs required
+    for Compare-view joins). This invariant is shared because capability
+    runs also accumulate experiments over time as the agent improves.
+
+    The capability dataset is the complementary suite to regression:
+    harder examples where pass rate starts low and tracks improvement,
+    per LangChain's Agent Evaluation Readiness Checklist. Kept as a
+    SEPARATE dataset (not just a marker on the regression dataset)
+    because capability and regression have different gating semantics —
+    regression hard-asserts in CI; capability tracks without gating.
+    Separate datasets make the boundary structural, not convention.
     """
     from src.seed_data import CAPABILITY_EXAMPLES
 
