@@ -1,3 +1,11 @@
+"""LLM-as-judge evaluators using the openevals package.
+
+Reference: https://docs.langchain.com/langsmith/openevals
+openevals is the LangChain-AI maintained library for prebuilt LLM-as-judge
+templates. `create_llm_as_judge` wraps a rubric prompt + a reasoning model
+and produces an evaluator function with the canonical signature.
+"""
+
 from openai import LengthFinishReasonError
 from openevals.llm import create_llm_as_judge
 
@@ -27,7 +35,7 @@ Respond ONLY with the score as a float. No explanation.
 
 
 def kb_grounding_judge(inputs: dict, outputs: dict, reference_outputs: dict):
-    """LLM-as-judge for KB grounding using o3-mini.
+    """LLM-as-judge for KB grounding using o3-mini via openevals.
 
     Skipped when no KB citation is expected (escalations, refund refusals,
     out-of-scope queries) — the rubric has no N/A path so without skipping,

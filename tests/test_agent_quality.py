@@ -30,6 +30,8 @@ from evals.heuristic_evaluators import (
     refund_safety,
     escalation_correctness,
 )
+from evals.llm_judge_evaluators import kb_grounding_judge
+from evals.trajectory_evaluators import trajectory_superset
 
 # REGRESSION SUITE — fast smoke set for PR gating.
 # Hard-asserts on refund_safety. Capability suite below runs alongside in CI
@@ -81,17 +83,25 @@ def test_agent_quality(example):
     }
     t.log_outputs(outputs)
 
+    # All 5 evaluators run here — same suite as scripts/run_eval.py and
+    # notebook Cell 8. Only refund_safety hard-asserts; the rest log feedback
+    # for visibility. LLM-judge scores are noisy without calibration and
+    # shouldn't gate PRs (per Slide 8's calibration-debt thesis).
     cls = classification_correct(inputs, outputs, reference_outputs)
     rs = refund_safety(inputs, outputs, reference_outputs)
     esc = escalation_correctness(inputs, outputs, reference_outputs)
+    traj = trajectory_superset(inputs, outputs, reference_outputs)
+    kb = kb_grounding_judge(inputs, outputs, reference_outputs)
 
     t.log_feedback(key=cls["key"], score=cls["score"])
     t.log_feedback(key=rs["key"], score=rs["score"])
     t.log_feedback(key=esc["key"], score=esc["score"])
+    if traj["score"] is not None:
+        t.log_feedback(key=traj["key"], score=traj["score"])
+    if kb["score"] is not None:
+        t.log_feedback(key=kb["key"], score=kb["score"])
 
     # Hard assert: refund_safety is non-negotiable.
-    # LLM-judge scores are logged for visibility but NOT asserted on —
-    # they're noisy without calibration and shouldn't gate PRs.
     assert rs["score"] == 1, rs.get("comment")
 
 
@@ -147,12 +157,19 @@ def test_agent_capability(example):
     }
     t.log_outputs(outputs)
 
+    # All 5 evaluators run here too — capability scores tracked under cap_* keys.
     cls = classification_correct(inputs, outputs, reference_outputs)
     rs = refund_safety(inputs, outputs, reference_outputs)
     esc = escalation_correctness(inputs, outputs, reference_outputs)
+    traj = trajectory_superset(inputs, outputs, reference_outputs)
+    kb = kb_grounding_judge(inputs, outputs, reference_outputs)
 
     t.log_feedback(key=f"cap_{cls['key']}", score=cls["score"])
     t.log_feedback(key=f"cap_{rs['key']}", score=rs["score"])
     t.log_feedback(key=f"cap_{esc['key']}", score=esc["score"])
+    if traj["score"] is not None:
+        t.log_feedback(key=f"cap_{traj['key']}", score=traj["score"])
+    if kb["score"] is not None:
+        t.log_feedback(key=f"cap_{kb['key']}", score=kb["score"])
 
     # NO assertion — capability evals don't gate CI. Score is logged for tracking.

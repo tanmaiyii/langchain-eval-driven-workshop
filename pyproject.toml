@@ -11,11 +11,10 @@ dependencies = [
     "langgraph>=1.1",
     "openai",
     "langsmith>=0.2",
-    "openevals",
-    "agentevals",
     "python-dotenv",
     "jupyter",
     "pytest",
+    "openevals>=0.2.0",
 ]
 
 [dependency-groups]

@@ -1,3 +1,11 @@
+"""Trajectory evaluator — code-based grader scoring the trajectory dimension.
+
+Reference: agentevals (`https://github.com/langchain-ai/agentevals`) ships
+`create_trajectory_llm_as_judge` for the LLM-judge variant of trajectory
+scoring; not used in this demo).
+"""
+
+
 def trajectory_superset(inputs: dict, outputs: dict, reference_outputs: dict):
     """Heuristic: every expected tool must appear in the actual tool sequence."""
     expected_tools = reference_outputs.get("expected_tools", [])

@@ -26,11 +26,16 @@ Output your final response in this exact JSON format on the last line:
 """
 
 
-def build_agent(checkpointer=None):
+def build_agent(checkpointer=None, system_prompt: str | None = None):
+    """Build an agent with the given system prompt (defaults to SYSTEM_PROMPT).
+
+    Parametrizing the prompt lets callers (e.g., scripts/run_regression_demo.py)
+    swap in alternate prompt versions to demonstrate regression catches.
+    """
     return create_agent(
         model="openai:gpt-4o-mini",
         tools=[get_customer_plan, search_kb, issue_refund, escalate],
-        system_prompt=SYSTEM_PROMPT,
+        system_prompt=system_prompt or SYSTEM_PROMPT,
         middleware=[
             HumanInTheLoopMiddleware(
                 interrupt_on={"issue_refund": True},

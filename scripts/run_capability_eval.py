@@ -8,7 +8,7 @@ improves. Per the Agent Evaluation Readiness Checklist:
    tasks, while regression evals protect what already works."
 """
 
-from langsmith import Client
+from langsmith import evaluate
 from evals.dataset import (
     CAPABILITY_DATASET_NAME,
     upsert_capability_dataset,
@@ -23,8 +23,7 @@ from evals.heuristic_evaluators import (
 
 def main():
     upsert_capability_dataset()
-    client = Client()
-    results = client.evaluate(
+    results = evaluate(
         target,
         data=CAPABILITY_DATASET_NAME,
         evaluators=[
