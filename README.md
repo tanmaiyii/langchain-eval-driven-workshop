@@ -1,6 +1,6 @@
 # Eval-Driven Development for Agents (Offline Loop)
 
-## From a Failing Trace to a Passing CI
+## From a Caught Trace to a Passing CI
 
 ![Agent Quality Evals](https://github.com/tanmaiyii/langchain-eval-driven-workshop/actions/workflows/evals.yml/badge.svg)
 
