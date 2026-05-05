@@ -1,3 +1,4 @@
+# Ad-hoc CLI runner — invokes client.evaluate against the regression dataset.
 from langsmith import Client
 from evals.dataset import DATASET_NAME, upsert_dataset
 from evals.target import target
