@@ -12,6 +12,7 @@ __pycache__/
 scripts/analyze_repetitions.py
 tests/notebook_narration.py
 tests/test_notebook_integrity.py
+notebook.with-narration.ipynb
 
 # Presenter-side content (kept local; delivered to the panel out-of-band, not via repo)
 slides/

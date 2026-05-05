@@ -1,6 +1,3 @@
-from agentevals.trajectory.llm import create_trajectory_llm_as_judge
-
-
 def trajectory_superset(inputs: dict, outputs: dict, reference_outputs: dict):
     """Heuristic: every expected tool must appear in the actual tool sequence."""
     expected_tools = reference_outputs.get("expected_tools", [])
@@ -14,15 +11,3 @@ def trajectory_superset(inputs: dict, outputs: dict, reference_outputs: dict):
         "score": score,
         "comment": f"expected={expected_tools} actual={actual}",
     }
-
-
-def trajectory_judge(inputs: dict, outputs: dict, reference_outputs: dict):
-    """LLM-as-judge for trajectory plausibility using o3-mini."""
-    judge = create_trajectory_llm_as_judge(
-        model="openai:o3-mini",
-    )
-    return judge(
-        inputs=inputs,
-        outputs={"trajectory": outputs.get("tool_calls", [])},
-        reference_outputs=reference_outputs,
-    )

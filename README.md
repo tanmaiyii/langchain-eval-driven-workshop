@@ -139,16 +139,38 @@ request before the refund hits the processing queue.
 > is the guardrail layer — addressed via the agent's middleware config
 > rather than as a separate evaluator.*
 
+**Three evaluator types** — each is different machinery for the same
+canonical signature `(inputs, outputs, reference_outputs) → {"key", "score", "comment"}`:
+
+- **Heuristic** — deterministic Python (~10 lines per evaluator). Cheap,
+  fast, free. The right shape for objective/structural properties (did
+  the agent call `issue_refund`? did it route to escalation?). Runs in
+  milliseconds. Used as the load-bearing CI gate because deterministic
+  scores can be hard-asserted without false positives.
+- **LLM-as-judge** — wraps a rubric prompt + reasoning model (`o3-mini`)
+  via [`openevals.create_llm_as_judge`](https://github.com/langchain-ai/openevals).
+  The right shape for subjective properties (did the response cite the
+  right KB doc? is the tone appropriate?). Costs money per run; requires
+  human calibration via LangSmith's Align Eval workflow before trustworthy
+  enough to gate. Tracks but doesn't gate CI here.
+- **Trajectory** — scores the *path* the agent took, not just the answer.
+  Implemented here as `trajectory_superset` — a heuristic that checks
+  every required tool appears in the actual call sequence. Catches
+  cases where the agent reaches a correct-looking answer through a
+  wrong path. [`agentevals`](https://github.com/langchain-ai/agentevals)
+  also ships an LLM-judge variant (`create_trajectory_llm_as_judge`)
+  for cases where strict superset matching is too rigid; not used in
+  this demo's main suite.
+
 | Evaluator | Type | Measures | Calibration |
 |---|---|---|---|
 | `classification_correct` | Heuristic | Did the agent classify the issue correctly? | Deterministic |
 | `refund_safety` | Heuristic | Did the agent avoid refunding when policy says no? | Deterministic |
 | `escalation_correctness` | Heuristic | Did the agent escalate when policy says yes? | Deterministic |
 | `kb_grounding` | LLM-as-judge | Is the response grounded in cited KB docs? | Requires Align Eval calibration |
-| `trajectory_superset` | Heuristic | Are required tools in the call sequence? | Deterministic |
-| `trajectory_judge` | LLM-as-judge | Is the trajectory reasonable for the task? | Requires Align Eval calibration |
+| `trajectory_superset` | Heuristic (trajectory) | Are required tools in the call sequence? | Deterministic |
 
-All six follow the canonical signature
+All five follow the canonical signature
 `(inputs, outputs, reference_outputs) -> {"key", "score", "comment"}`
 from the [LangSmith Evaluation Quickstart](https://docs.langchain.com/langsmith/evaluation-quickstart) —
 runner-agnostic, so the same evaluators work in `client.evaluate(...)`
@@ -194,10 +216,6 @@ and quality-threshold-triggered annotation queues), see LangChain's
 ---
 
 ## The 24 seed examples
-
-> *In production, dataset construction is preceded by manual review
-> of 20–50 real agent traces. The hand-crafted seed set below is
-> that step's output, compressed into a teaching artifact.*
 
 **21 regression examples** in `SEED_EXAMPLES` covering:
 
@@ -309,7 +327,7 @@ deliverable for Module 4.
 - **[LangSmith Evaluation Quickstart](https://docs.langchain.com/langsmith/evaluation-quickstart)** — canonical evaluator signature, dataset shape, and `client.evaluate(...)` runner this repo follows.
 - **[Agent Evaluation Readiness Checklist](https://www.langchain.com/blog/agent-evaluation-readiness-checklist)** — strategic framing for eval-driven dev; the two-suites split and CI gating guidance this repo implements.
 - **[LangSmith CI/CD pipeline guide](https://docs.langchain.com/langsmith/cicd-pipeline-example)** — production pipeline pattern (GitHub Actions + AgentEvals + OpenEvals); the natural next read after this repo.
-- **[langchain-ai/intro-to-langsmith](https://github.com/langchain-ai/intro-to-langsmith)** — official LangSmith course; Module 4 (Collecting Human Feedback) covers the Align Eval calibration workflow.
+- **[langchain-ai/intro-to-langsmith](https://github.com/langchain-ai/intro-to-langsmith)** ([LangChain Academy course](https://academy.langchain.com/courses/intro-to-langsmith)) — official LangSmith course; Module 4 (Collecting Human Feedback) covers the Align Eval calibration workflow.
 - **[openevals](https://github.com/langchain-ai/openevals)** — pre-built LLM-judge templates; `create_llm_as_judge` lives here.
 - **[agentevals](https://github.com/langchain-ai/agentevals)** — trajectory-evaluation patterns; `create_trajectory_llm_as_judge` lives here.
 - **[HumanInTheLoopMiddleware](https://docs.langchain.com/oss/python/langchain/human-in-the-loop)** — runtime safety layer wired around `issue_refund`.
