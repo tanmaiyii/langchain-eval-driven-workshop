@@ -13,6 +13,14 @@ scripts/analyze_repetitions.py
 tests/notebook_narration.py
 tests/test_notebook_integrity.py
 notebook.with-narration.ipynb
+notebook.ipynb
+
+# OS noise
+.DS_Store
+
+# Local prep docs (kept local)
+prep_guide.html
+PREP_GUIDE.html
 
 # Presenter-side content (kept local; delivered to the panel out-of-band, not via repo)
 slides/

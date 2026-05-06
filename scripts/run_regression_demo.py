@@ -12,6 +12,8 @@ Usage:
     uv run python -m scripts.run_regression_demo
 """
 
+import datetime
+
 from langgraph.types import Command
 from langsmith import evaluate
 
@@ -24,6 +26,13 @@ from evals.heuristic_evaluators import (
 )
 from evals.llm_judge_evaluators import kb_grounding_judge
 from evals.trajectory_evaluators import trajectory_superset
+
+
+# Shared run identifier so the v1/v2/v3 trio is visibly grouped in LangSmith.
+# Each invocation of this script gets a single timestamped run_id; all three
+# experiments produced in this run share it, both in the experiment name
+# (suffix) and in the metadata (filterable in the UI).
+RUN_ID = datetime.datetime.now().strftime("%Y%m%d-%H%M")
 
 
 EVALUATORS = [
@@ -106,14 +115,16 @@ def make_target(agent):
 
 def run_variant(prompt: str, prefix: str):
     """Build an agent with the given prompt and run the eval suite."""
-    print(f"\n=== {prefix} ===")
+    labeled_prefix = f"{prefix}-{RUN_ID}"
+    print(f"\n=== {labeled_prefix} ===")
     agent_variant = build_agent(system_prompt=prompt)
     target = make_target(agent_variant)
     results = evaluate(
         target,
         data=DATASET_NAME,
         evaluators=EVALUATORS,
-        experiment_prefix=prefix,
+        experiment_prefix=labeled_prefix,
+        metadata={"demo_run_id": RUN_ID, "demo_set": "regression-trio"},
         max_concurrency=4,
     )
     print(results)
@@ -121,11 +132,16 @@ def run_variant(prompt: str, prefix: str):
 
 
 def main():
+    print(f"Regression demo run_id: {RUN_ID}")
+    print(f"All three experiments will share suffix '-{RUN_ID}' and metadata demo_set=regression-trio\n")
     upsert_dataset()
     run_variant(V1_PROMPT, "v1-baseline")
     run_variant(V2_PROMPT, "v2-removed-guardrail")
     run_variant(V3_PROMPT, "v3-restored")
-    print("\nAll three experiments produced. Open the LangSmith Compare view to see them side-by-side joined by example UUID.")
+    print(f"\nAll three experiments produced with run_id {RUN_ID}.")
+    print("Find them in LangSmith → Datasets → support-triage-v1 → Experiments tab.")
+    print(f"Filter by metadata.demo_run_id = {RUN_ID} to isolate this trio.")
+    print("Select all three → click Compare for the side-by-side view.")
 
 
 if __name__ == "__main__":
