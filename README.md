@@ -49,9 +49,81 @@ uv run pytest tests/ -v
 uv run python -m scripts.run_eval             # regression
 uv run python -m scripts.run_capability_eval  # capability
 
-# 7. Open the workshop notebook
-uv run jupyter lab notebook.ipynb
+# 7. Open the workshop notebook — build-along style; everything inline,
+#    audience can replicate cell-by-cell.
+uv run jupyter lab notebook_buildalong.ipynb
 ```
+
+### Setting up CI in your own fork
+
+If you fork this repo and want CI to run on your own pull requests:
+
+```bash
+# 1. Fork the repo on GitHub (or push to your own remote)
+git remote set-url origin https://github.com/YOUR-USERNAME/langchain-eval-driven-workshop.git
+
+# 2. Add repository secrets in GitHub
+#    Settings → Secrets and variables → Actions → New repository secret
+#    Add:
+#      OPENAI_API_KEY    = sk-...
+#      LANGSMITH_API_KEY = lsv2_...
+#    (LANGSMITH_TRACING and LANGSMITH_PROJECT are set in evals.yml's env block)
+
+# 3. Push a commit or open a PR — CI fires automatically
+git push origin main
+# or open a PR against your fork's main branch
+
+# 4. Watch the run
+#    Web UI:  github.com/YOUR-USERNAME/langchain-eval-driven-workshop/actions
+#    Or CLI:  gh run list --workflow=evals.yml --limit=5
+#             gh run view --log
+```
+
+**Triggering CI manually (optional):** add `workflow_dispatch:` to the `on:` block in `.github/workflows/evals.yml` to enable a "Run workflow" button in the UI plus CLI/API triggering via `gh workflow run evals.yml`.
+
+---
+
+## Two ways to run this — notebook vs modular files
+
+This repo offers the same patterns at two levels of organization:
+
+| Surface | What it is | When to use |
+|---|---|---|
+| **`notebook_buildalong.ipynb`** | Build-along notebook — defines dataset, agent, evaluators, experiments, and CI patterns inline cell-by-cell | Following along the workshop, learning the patterns from scratch, or replicating in your own repo |
+| **Modular files** (`src/`, `evals/`, `tests/`, `.github/workflows/`) | Same logic split into Python modules — production-ready structure | Once you've understood the patterns and want to ship them in a real codebase |
+
+### Order to run the modular files (if not using the notebook)
+
+If you'd rather skip the notebook and run the modular pattern as scripts, this is the order:
+
+```bash
+# 1. Smoke test the agent — verifies env + LangSmith tracing works
+uv run python -m scripts.smoke_test
+
+# 2. Upsert the regression dataset to LangSmith (idempotent — keyed on ex_id)
+uv run python -c "from evals.dataset import upsert_dataset; upsert_dataset()"
+
+# 3. (Optional) Upsert the capability dataset
+uv run python -c "from evals.dataset import upsert_capability_dataset; upsert_capability_dataset()"
+
+# 4. Run a single regression experiment (ad-hoc baseline)
+uv run python -m scripts.run_eval
+
+# 5. Run the v1/v2/v3 regression demo (produces 3 experiments side-by-side)
+uv run python -m scripts.run_regression_demo
+
+# 6. Run the capability suite once
+uv run python -m scripts.run_capability_eval
+
+# 7. Run the CI-style pytest gate locally
+uv run pytest tests/ -v
+```
+
+### When CI fires
+
+Once you push or open a PR, `.github/workflows/evals.yml` runs `pytest tests/ --langsmith-output -v` automatically — same command as step 7 above, just on GitHub's runners. Both regression and capability tests run in one invocation; gating is via assertions inside the regression tests, not via a marker filter.
+
+The notebook teaches the patterns; the modular files are how you'd ship them.
 
 ---
 
@@ -240,9 +312,16 @@ runs all three end-to-end and prints LangSmith URLs:
 
 | Experiment | What changed | Score on `refund_safety` |
 |---|---|---|
-| `v1-baseline` | Original prompt with the "Never refund a free-tier customer" line | 100% |
-| `v2-removed-guardrail` | Deleted that one line from the system prompt | Drops on `ex-012` (the free-tier trap) |
-| `v3-restored` | Line restored | Returns to 100% |
+| `v1-baseline-<run_id>` | Original prompt with the "Never refund a free-tier customer" line | 100% |
+| `v2-removed-guardrail-<run_id>` | Deleted that one line from the system prompt | Drops on `ex-012` (the free-tier trap) |
+| `v3-restored-<run_id>` | Line restored | Returns to 100% |
+
+Each invocation of the script tags all three experiments with the same
+`<run_id>` (a `YYYYMMDD-HHMM` timestamp) in both the experiment name and
+the LangSmith metadata field `demo_run_id`. Filter by
+`metadata.demo_run_id = <run_id>` in the LangSmith UI to isolate one trio
+across re-runs. Tag `metadata.demo_set = regression-trio` groups all
+script-produced experiments.
 
 LangSmith's side-by-side comparison view shows the regression caught
 visually — same dataset, three agent versions, three columns of scores.
