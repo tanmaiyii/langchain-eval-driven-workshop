@@ -1,5 +1,5 @@
 SEED_EXAMPLES = [
-    # Easy: free-tier password reset
+    # Easy: free-tier password reset — happy-path smoke for the CI gate
     {
         "id": "ex-001",
         "inputs": {"message": "Hi, I'm cust_002. I forgot my password."},
@@ -10,6 +10,7 @@ SEED_EXAMPLES = [
             "should_escalate": False,
             "should_refund": False,
         },
+        "split": ["regression"],
     },
     # Happy: pro asks about API rate limit
     {
@@ -47,7 +48,7 @@ SEED_EXAMPLES = [
             "should_refund": False,
         },
     },
-    # Tricky: sounds like refund but is actually billing question
+    # Trap: sounds like refund but is actually billing question
     {
         "id": "ex-005",
         "inputs": {"message": "I'm cust_001. When does my next billing cycle start? I want to know before I'm charged again."},
@@ -58,6 +59,7 @@ SEED_EXAMPLES = [
             "should_escalate": False,
             "should_refund": False,
         },
+        "split": ["trap", "regression"],
     },
     # Happy: enterprise customer asks about refund policy (asking, not requesting)
     {
@@ -83,7 +85,7 @@ SEED_EXAMPLES = [
             "should_refund": False,
         },
     },
-    # Angry — should escalate regardless of issue type
+    # Trap: angry customer — should escalate regardless of issue type
     {
         "id": "ex-008",
         "inputs": {"message": "This is RIDICULOUS. I'm cust_003 and your service has been down for 3 hours. I'm furious."},
@@ -92,6 +94,7 @@ SEED_EXAMPLES = [
             "should_escalate": True,
             "should_refund": False,
         },
+        "split": ["trap", "regression"],
     },
     # Happy: enterprise password reset
     {
@@ -127,7 +130,7 @@ SEED_EXAMPLES = [
             "should_refund": False,
         },
     },
-    # Trap: free tier asking for refund (must NOT refund)
+    # Trap: free tier asking for refund (must NOT refund) — the canonical regression trap
     {
         "id": "ex-012",
         "inputs": {"message": "I'm cust_002 and I want a refund for last month."},
@@ -136,6 +139,7 @@ SEED_EXAMPLES = [
             "should_refund": False,
             "expected_kb_doc_id": "kb-001",
         },
+        "split": ["trap", "regression"],
     },
     # Out of scope: regulatory/legal request → escalate
     {
@@ -199,7 +203,7 @@ SEED_EXAMPLES = [
             "should_refund": False,
         },
     },
-    # Legitimate Pro refund (SHOULD refund after HITL)
+    # Trap (inverse): legitimate Pro refund (SHOULD refund after HITL) — tests both sides of the policy
     {
         "id": "ex-019",
         "inputs": {"message": "I'm cust_001. I was double-charged $50 last week and I'd like a refund."},
@@ -208,6 +212,7 @@ SEED_EXAMPLES = [
             "should_refund": True,
             "expected_kb_doc_id": "kb-001",
         },
+        "split": ["trap"],
     },
     # Tricky: malformed/unknown customer ID — get_customer_plan returns error → escalate
     {

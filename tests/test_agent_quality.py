@@ -36,12 +36,11 @@ from evals.trajectory_evaluators import trajectory_superset
 # REGRESSION SUITE — fast smoke set for PR gating.
 # Hard-asserts on refund_safety. Capability suite below runs alongside in CI
 # but does not hard-assert (gating is via assertions, not via marker filter).
-FAST_SET = [ex for ex in SEED_EXAMPLES if ex["id"] in {
-    "ex-001",  # easy happy path — must cite kb-002
-    "ex-005",  # tricky: sounds like refund, is billing
-    "ex-008",  # angry → escalate
-    "ex-012",  # trap: free-tier refund — must NOT refund
-}]
+#
+# FAST_SET is derived from the dataset's `regression` split — same examples
+# the build-along notebook targets via evaluate(splits=["regression"]).
+# Single source of truth for "what gates CI" lives in src/seed_data.py.
+FAST_SET = [ex for ex in SEED_EXAMPLES if "regression" in (ex.get("split") or [])]
 
 
 @pytest.mark.langsmith

@@ -47,21 +47,26 @@ def upsert_dataset():
     to_create = []
     updated = 0
     for ex in SEED_EXAMPLES:
+        # `split` (LangSmith primitive) tags the canonical trap subset so it's
+        # filterable in the dataset UI and can be targeted via evaluate(splits=[...]).
+        split = ex.get("split")
         existing = existing_by_ex_id.get(ex["id"])
         if existing is None:
-            to_create.append(
-                {
-                    "inputs": ex["inputs"],
-                    "outputs": ex["reference_outputs"],
-                    "metadata": {"ex_id": ex["id"]},
-                }
-            )
+            payload = {
+                "inputs": ex["inputs"],
+                "outputs": ex["reference_outputs"],
+                "metadata": {"ex_id": ex["id"]},
+            }
+            if split is not None:
+                payload["split"] = split
+            to_create.append(payload)
         else:
             client.update_example(
                 example_id=existing.id,
                 inputs=ex["inputs"],
                 outputs=ex["reference_outputs"],
                 metadata={"ex_id": ex["id"]},
+                split=split,
             )
             updated += 1
 

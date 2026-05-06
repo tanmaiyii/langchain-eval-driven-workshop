@@ -15,6 +15,7 @@ dependencies = [
     "jupyter",
     "pytest",
     "openevals>=0.2.0",
+    "pandas>=3.0.2",
 ]
 
 [dependency-groups]

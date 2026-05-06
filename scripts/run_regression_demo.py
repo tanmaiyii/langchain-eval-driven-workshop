@@ -15,7 +15,7 @@ Usage:
 import datetime
 
 from langgraph.types import Command
-from langsmith import evaluate
+from langsmith import Client, evaluate
 
 from src.agent import SYSTEM_PROMPT, build_agent
 from evals.dataset import DATASET_NAME, upsert_dataset
@@ -113,7 +113,7 @@ def make_target(agent):
     return target
 
 
-def run_variant(prompt: str, prefix: str):
+def run_variant(prompt: str, prefix: str, data):
     """Build an agent with the given prompt and run the eval suite."""
     labeled_prefix = f"{prefix}-{RUN_ID}"
     print(f"\n=== {labeled_prefix} ===")
@@ -121,7 +121,7 @@ def run_variant(prompt: str, prefix: str):
     target = make_target(agent_variant)
     results = evaluate(
         target,
-        data=DATASET_NAME,
+        data=data,
         evaluators=EVALUATORS,
         experiment_prefix=labeled_prefix,
         metadata={"demo_run_id": RUN_ID, "demo_set": "regression-trio"},
@@ -135,9 +135,17 @@ def main():
     print(f"Regression demo run_id: {RUN_ID}")
     print(f"All three experiments will share suffix '-{RUN_ID}' and metadata demo_set=regression-trio\n")
     upsert_dataset()
-    run_variant(V1_PROMPT, "v1-baseline")
-    run_variant(V2_PROMPT, "v2-removed-guardrail")
-    run_variant(V3_PROMPT, "v3-restored")
+
+    # Target the `regression` split (4 examples) — same set the build-along
+    # notebook and pytest CI gate run on. Single source of truth.
+    client = Client()
+    data = list(client.list_examples(dataset_name=DATASET_NAME, splits=["regression"]))
+    ex_ids = sorted(e.metadata.get("ex_id") for e in data)
+    print(f"Regression split has {len(data)} examples: {ex_ids}\n")
+
+    run_variant(V1_PROMPT, "v1-baseline", data)
+    run_variant(V2_PROMPT, "v2-removed-guardrail", data)
+    run_variant(V3_PROMPT, "v3-restored", data)
     print(f"\nAll three experiments produced with run_id {RUN_ID}.")
     print("Find them in LangSmith → Datasets → support-triage-v1 → Experiments tab.")
     print(f"Filter by metadata.demo_run_id = {RUN_ID} to isolate this trio.")

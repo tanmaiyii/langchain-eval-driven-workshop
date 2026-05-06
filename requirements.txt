@@ -243,6 +243,8 @@ notebook-shim==0.2.4
     # via
     #   jupyterlab
     #   notebook
+numpy==2.4.4
+    # via pandas
 openai==2.33.0
     # via
     #   langchain-eval-driven-workshop
@@ -269,6 +271,8 @@ packaging==26.2
     #   langsmith
     #   nbconvert
     #   pytest
+pandas==3.0.2
+    # via langchain-eval-driven-workshop
 pandocfilters==1.5.1
     # via nbconvert
 parso==0.8.6
@@ -324,6 +328,7 @@ python-dateutil==2.9.0.post0
     # via
     #   arrow
     #   jupyter-client
+    #   pandas
 python-dotenv==1.2.2
     # via langchain-eval-driven-workshop
 python-json-logger==4.1.0
@@ -441,7 +446,9 @@ typing-extensions==4.15.0
 typing-inspection==0.4.2
     # via pydantic
 tzdata==2026.2
-    # via arrow
+    # via
+    #   arrow
+    #   pandas
 uri-template==1.3.0
     # via jsonschema
 urllib3==2.6.3
