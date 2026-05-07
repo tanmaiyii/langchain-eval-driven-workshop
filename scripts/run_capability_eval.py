@@ -11,7 +11,7 @@ improves. Per the Agent Evaluation Readiness Checklist:
 from langsmith import evaluate
 from evals.dataset import (
     CAPABILITY_DATASET_NAME,
-    upsert_capability_dataset,
+    ensure_capability_dataset,
 )
 from evals.target import target
 from evals.heuristic_evaluators import (
@@ -22,7 +22,7 @@ from evals.heuristic_evaluators import (
 
 
 def main():
-    upsert_capability_dataset()
+    ensure_capability_dataset()
     results = evaluate(
         target,
         data=CAPABILITY_DATASET_NAME,

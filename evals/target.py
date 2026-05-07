@@ -1,3 +1,5 @@
+import uuid
+
 from langgraph.types import Command
 from src.agent import agent
 
@@ -12,17 +14,19 @@ def target(inputs: dict) -> dict:
     is exercised by `ex-021` to demonstrate that the eval infrastructure
     handles both shapes.
 
+    Each invocation of `target()` gets a fresh thread_id (UUID) so that
+    `num_repetitions` in `evaluate()` produces genuinely independent trials
+    — no message-history leakage between repetitions of the same example.
+
     The HITL middleware will interrupt on issue_refund. For evals, we
     auto-approve so we measure what the agent WANTED to do.
     """
     if "messages" in inputs and isinstance(inputs["messages"], list):
         user_turns = inputs["messages"]
-        thread_seed = "|".join(user_turns)
     else:
         user_turns = [inputs["message"]]
-        thread_seed = inputs["message"]
 
-    config = {"configurable": {"thread_id": f"eval-{abs(hash(thread_seed))}"}}
+    config = {"configurable": {"thread_id": f"eval-{uuid.uuid4()}"}}
     result = None
     for user_msg in user_turns:
         result = agent.invoke(

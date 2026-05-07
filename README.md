@@ -100,11 +100,11 @@ If you'd rather skip the notebook and run the modular pattern as scripts, this i
 # 1. Smoke test the agent — verifies env + LangSmith tracing works
 uv run python -m scripts.smoke_test
 
-# 2. Upsert the regression dataset to LangSmith (idempotent — keyed on ex_id)
-uv run python -c "from evals.dataset import upsert_dataset; upsert_dataset()"
+# 2. Ensure the regression dataset exists in LangSmith (idempotent: skip if present, create + populate if absent)
+uv run python -c "from evals.dataset import ensure_dataset; ensure_dataset()"
 
-# 3. (Optional) Upsert the capability dataset
-uv run python -c "from evals.dataset import upsert_capability_dataset; upsert_capability_dataset()"
+# 3. (Optional) Ensure the capability dataset
+uv run python -c "from evals.dataset import ensure_capability_dataset; ensure_capability_dataset()"
 
 # 4. Run a single regression experiment (ad-hoc baseline)
 uv run python -m scripts.run_eval

@@ -14,6 +14,7 @@ tests/notebook_narration.py
 tests/test_notebook_integrity.py
 notebook.with-narration.ipynb
 notebook.ipynb
+notebook_test_create_only.ipynb
 
 # OS noise
 .DS_Store

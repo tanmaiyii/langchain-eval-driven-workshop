@@ -13,12 +13,13 @@ Usage:
 """
 
 import datetime
+import uuid
 
 from langgraph.types import Command
 from langsmith import Client, evaluate
 
 from src.agent import SYSTEM_PROMPT, build_agent
-from evals.dataset import DATASET_NAME, upsert_dataset
+from evals.dataset import DATASET_NAME, ensure_dataset
 from evals.heuristic_evaluators import (
     classification_correct,
     refund_safety,
@@ -80,12 +81,12 @@ def make_target(agent):
     def target(inputs: dict) -> dict:
         if "messages" in inputs and isinstance(inputs["messages"], list):
             user_turns = inputs["messages"]
-            thread_seed = "|".join(user_turns)
         else:
             user_turns = [inputs["message"]]
-            thread_seed = inputs["message"]
 
-        config = {"configurable": {"thread_id": f"eval-{abs(hash(thread_seed))}"}}
+        # Fresh thread per call — required for num_repetitions to give
+        # genuinely independent trials (no message-history leakage between reps).
+        config = {"configurable": {"thread_id": f"eval-{uuid.uuid4()}"}}
         result = None
         for user_msg in user_turns:
             result = agent.invoke(
@@ -113,8 +114,16 @@ def make_target(agent):
     return target
 
 
-def run_variant(prompt: str, prefix: str, data):
-    """Build an agent with the given prompt and run the eval suite."""
+def run_variant(prompt: str, prefix: str, data, num_repetitions: int = 1):
+    """Build an agent with the given prompt and run the eval suite.
+
+    `num_repetitions=N` runs each example N times in the same experiment.
+    Aggregated scoring surfaces non-determinism: an example that passes on
+    rep 1 may fail on rep 3 due to LLM stochasticity. Default 1 (single
+    trial); v2 uses 3 to make the regression catch reliable on ex-012,
+    where the agent has a ~40% chance of rescuing via search_kb reading
+    kb-001 even after the policy line is removed.
+    """
     labeled_prefix = f"{prefix}-{RUN_ID}"
     print(f"\n=== {labeled_prefix} ===")
     agent_variant = build_agent(system_prompt=prompt)
@@ -126,6 +135,7 @@ def run_variant(prompt: str, prefix: str, data):
         experiment_prefix=labeled_prefix,
         metadata={"demo_run_id": RUN_ID, "demo_set": "regression-trio"},
         max_concurrency=4,
+        num_repetitions=num_repetitions,
     )
     print(results)
     return results
@@ -134,7 +144,7 @@ def run_variant(prompt: str, prefix: str, data):
 def main():
     print(f"Regression demo run_id: {RUN_ID}")
     print(f"All three experiments will share suffix '-{RUN_ID}' and metadata demo_set=regression-trio\n")
-    upsert_dataset()
+    ensure_dataset()
 
     # Target the `regression` split (4 examples) — same set the build-along
     # notebook and pytest CI gate run on. Single source of truth.
@@ -143,9 +153,17 @@ def main():
     ex_ids = sorted(e.metadata.get("ex_id") for e in data)
     print(f"Regression split has {len(data)} examples: {ex_ids}\n")
 
-    run_variant(V1_PROMPT, "v1-baseline", data)
-    run_variant(V2_PROMPT, "v2-removed-guardrail", data)
-    run_variant(V3_PROMPT, "v3-restored", data)
+    # All three variants use num_repetitions=3 for symmetric Compare-view
+    # rows (4 examples × 3 reps = 12 rows per experiment, side-by-side).
+    # Why 3 reps matters most for v2: the regression catch on ex-012 is
+    # non-deterministic — the agent has ~30% chance per trial of rescuing
+    # via search_kb reading kb-001 even after the policy line is removed.
+    # 3 reps × ~70% per-trial catch ≈ 97% chance of seeing at least one
+    # refund_safety=0 in the Compare view — the canonical num_repetitions
+    # use case (measure variance, don't trust a single snapshot).
+    run_variant(V1_PROMPT, "v1-baseline", data, num_repetitions=3)
+    run_variant(V2_PROMPT, "v2-removed-guardrail", data, num_repetitions=3)
+    run_variant(V3_PROMPT, "v3-restored", data, num_repetitions=3)
     print(f"\nAll three experiments produced with run_id {RUN_ID}.")
     print("Find them in LangSmith → Datasets → support-triage-v1 → Experiments tab.")
     print(f"Filter by metadata.demo_run_id = {RUN_ID} to isolate this trio.")

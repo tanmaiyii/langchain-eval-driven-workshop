@@ -1,6 +1,6 @@
 # Ad-hoc CLI runner — invokes the canonical langsmith.evaluate against the regression dataset.
 from langsmith import evaluate
-from evals.dataset import DATASET_NAME, upsert_dataset
+from evals.dataset import DATASET_NAME, ensure_dataset
 from evals.target import target
 from evals.heuristic_evaluators import (
     classification_correct,
@@ -12,7 +12,7 @@ from evals.trajectory_evaluators import trajectory_superset
 
 
 def main():
-    upsert_dataset()
+    ensure_dataset()
     results = evaluate(
         target,
         data=DATASET_NAME,
